@@ -10,6 +10,7 @@ const
 var app = express();
 app.set('port', process.env.PORT || 3000);
 app.set('view engine', 'ejs');
+app.use(bodyParser.json());
 app.use(express.static('public'));
 
 /*
@@ -52,7 +53,7 @@ app.get('/webhook', function(req, res) {
     res.status(200).send(req.query['hub.challenge']);
   } else {
     console.error("Failed validation. Make sure the validation tokens match.");
-    res.sendStatus(403);          
+    res.sendStatus(403);      
   }  
 });
 
