@@ -81,13 +81,11 @@ function receivedMessage(event) {
 		}
 	}, function (error, response, body) {
 		if (!error && response.statusCode == 200)
-			sendTextMessage(senderID, formResponseMessage(body));
+			sendTextMessage(senderID, formResponseMessage(JSON.parse(body)));
 	});
 }
 
 function formResponseMessage(body) {
-	console.log(typeof body);
-	console.log(body);
 	var city = body.result.parameters['geo-city'];
 	var date = body.result.parameters['date'];
 	var time = body.result.parameters['time'];
