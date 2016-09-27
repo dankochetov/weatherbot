@@ -73,7 +73,7 @@ function receivedMessage(event) {
 		},
 		qs: {
 			v: '20150910'
-		}
+		},
 		method: 'POST',
 		json: {
 			query: message.text,
