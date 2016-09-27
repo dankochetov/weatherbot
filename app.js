@@ -103,9 +103,9 @@ function formResponseMessage(body) {
 			time = '00:00:00';
 		else {
 			var currentTime = new Date(body.result.timestamp);
-			var hours = currentDate.getHours();
-			var minutes = currentDate.getMinutes();
-			var seconds = currentDate.getSeconds();
+			var hours = currentTime.getHours();
+			var minutes = currentTime.getMinutes();
+			var seconds = currentTime.getSeconds();
 			time = '' + (hours / 10) + (hours % 10) + ':' + (minutes / 10) + (minutes % 10) + ':' + (seconds / 10) + (seconds % 10);
 		}
 	}
