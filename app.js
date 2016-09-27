@@ -190,7 +190,8 @@ function callSendAPI(messageData) {
 			recipientId);
 			}
 		} else {
-			console.error(response.error);
+			console.log(response);
+			console.log(body);
 		}
 	});
 }
