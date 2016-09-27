@@ -69,8 +69,11 @@ function receivedMessage(event) {
 	{
 		url: 'https://api.api.ai/v1/query',
 		headers: {
-			'Bearer': API_AI_ACCESS_TOKEN,
+			'Authorization': 'Bearer ' + API_AI_ACCESS_TOKEN,
 		},
+		qs: {
+			v: '20150910'
+		}
 		method: 'POST',
 		json: {
 			query: message.text,
