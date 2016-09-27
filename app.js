@@ -86,6 +86,8 @@ function receivedMessage(event) {
 }
 
 function formResponseMessage(body) {
+	console.log(typeof body);
+	console.log(body);
 	var city = body.result.parameters['geo-city'];
 	var date = body.result.parameters['date'];
 	var time = body.result.parameters['time'];
