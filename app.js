@@ -86,6 +86,8 @@ function receivedMessage(event) {
 }
 
 function formResponseMessage(body) {
+	if (body.result.metadata.intentName == 'Default Fallback Intent')
+		return body.result.fulfillment.speech;
 	var city = body.result.parameters['geo-city'];
 	var date = body.result.parameters['date'];
 	var time = body.result.parameters['time'];
