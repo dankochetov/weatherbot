@@ -4,11 +4,13 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var request = require('request');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
-var VALIDATION_TOKEN = process.env.VALIDATION_TOKEN || '';
+const VALIDATION_TOKEN = process.env.VALIDATION_TOKEN || '';
+const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN || '';
 
 var app = express();
 
@@ -24,6 +26,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+// Facebook webhook verification
 app.get('/webhook', function(req, res) {
 	if (req.query['hub.mode'] === 'subscribe' &&
 			req.query['hub.verify_token'] === VALIDATION_TOKEN) {
@@ -33,6 +37,67 @@ app.get('/webhook', function(req, res) {
 		console.error("Failed validation. Make sure the validation tokens match.");
 		res.sendStatus(403);					
 	}	
+});
+
+function sendMessage(recipientID, messageText) {
+	var messageData = {
+		recipient: {
+			id: recipientID
+		},
+		message: {
+			text: messageText
+		}
+	};
+
+	request({
+		uri: 'https://graph.facebook.com/v2.6/me/messages',
+		qs: {
+			access_token: PAGE_ACCESS_TOKEN
+		},
+		method: 'POST',
+		json: messageData
+	}, function(error, response, body) {
+		if (!error && response.statusCode == 200) {
+			var recipientID = body.recipient_id;
+			var messageID = body.message_id;
+			console.log("Successfully sent generic message with id %s to recipient %s", messageID, recipientID);
+		}
+		else {
+			console.error("Unable to send message.");
+			console.error(response);
+			console.error(error);
+		}
+	});
+}
+
+function receivedMessage(event) {
+	var senderID = event.sender.id;
+	var recipientID = event.recipient.id;
+	var timeOfMessage = event.timestamp;
+	var message = event.message;
+	console.log("Received message for user %d and page %d at %d with message:", senderID, recipientID, timeOfMessage);
+	console.log(JSON.stringify(message));
+
+	var messageID = message.mid;
+
+	var messageText = message.text;
+	sendTextMessage(senderID, messageText);
+}
+
+app.post('/webhook', function(req, res, next) {
+	var data = req.body;
+	if (data.object == 'page') {
+		data.entry.forEach(function(pageEntry) {
+			var pageID = pageEntry.id;
+			var timeOfEvent = pageEntry.name;
+
+			pageEntry.messaging.forEach(function(messagingEvent) {
+				if (messagingEvent.message) {
+					receivedMessage(messagingEvent);
+				}
+			});
+		});
+	}
 });
 
 // catch 404 and forward to error handler
