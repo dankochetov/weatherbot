@@ -94,8 +94,24 @@ function formResponseMessage(body) {
 	var hasCity = city != null && city != "";
 	var hasDate = date != null && date != "";
 	var hasTime = time != null && time != "";
+	if (!hasCity)
+		city = 'your location';
+	if (!hasDate)
+		date = 'today';
+	if (!hasTime) {
+		if (hasDate)
+			time = '00:00:00';
+		else {
+			var currentTime = new Date(body.result.timestamp);
+			var hours = currentDate.getHours();
+			var minutes = currentDate.getMinutes();
+			var seconds = currentDate.getSeconds();
+			time = '' + (hours / 10) + (hours % 10) + ':' + (minutes / 10) + (minutes % 10) + ':' + (seconds / 10) + (seconds % 10);
+		}
+	}
+
 	console.log(hasCity, city, hasDate, date, hasTime, time);
-	var result = 'You requested a weather forecast in ' + (hasCity ? city : 'your location') + ' for ' + (hasDate ? date : 'now') + ' at ' + (hasTime ? time : '00:00') + '.';
+	var result = 'You requested a weather forecast in ' + city + ' for ' + date + ' at ' + time + '.';
 	return result;
 }
 
