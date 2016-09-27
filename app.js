@@ -70,14 +70,14 @@ function receivedMessage(event) {
 		url: 'https://api.api.ai/v1/query',
 		headers: {
 			'Authorization': 'Bearer ' + API_AI_ACCESS_TOKEN,
+			'Content-Type': 'application/json; charset=utf-8'
 		},
+		method: 'GET',
 		qs: {
 			v: '20150910'
-		},
-		method: 'POST',
-		json: {
 			query: message.text,
-			sessionId: '1234567890'
+			sessionId: '1234567890',
+			lang: 'en'
 		}
 	}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
