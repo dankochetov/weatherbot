@@ -97,17 +97,12 @@ function formResponseMessage(body) {
 	if (!hasCity)
 		city = 'your location';
 	if (!hasDate)
-		date = 'today';
+		date = body.timestamp.substring(0, 10);
 	if (!hasTime) {
 		if (hasDate)
 			time = '00:00:00';
 		else {
-			var currentTime = new Date(body.timestamp);
-			console.log(body.timestamp, currentTime);
-			var hours = currentTime.getHours();
-			var minutes = currentTime.getMinutes();
-			var seconds = currentTime.getSeconds();
-			time = '' + Math.floor(hours / 10) + (hours % 10) + ':' + Math.floor(minutes / 10) + (minutes % 10) + ':' + Math.floor(seconds / 10) + (seconds % 10);
+			time = body.timestamp.substring(11, 19);
 		}
 	}
 
