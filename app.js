@@ -107,7 +107,7 @@ function formResponseMessage(body) {
 			var hours = currentTime.getHours();
 			var minutes = currentTime.getMinutes();
 			var seconds = currentTime.getSeconds();
-			time = '' + (hours / 10) + (hours % 10) + ':' + (minutes / 10) + (minutes % 10) + ':' + (seconds / 10) + (seconds % 10);
+			time = '' + Math.floor(hours / 10) + (hours % 10) + ':' + Math.floor(minutes / 10) + (minutes % 10) + ':' + Math.floor(seconds / 10) + (seconds % 10);
 		}
 	}
 
