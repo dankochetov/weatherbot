@@ -13,9 +13,11 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-const VALIDATION_TOKEN = (process.env.MESSENGER_VALIDATION_TOKEN) ? (process.env.MESSENGER_VALIDATION_TOKEN) : ''
+const VALIDATION_TOKEN = process.env.MESSENGER_VALIDATION_TOKEN || '';
 
-const PAGE_ACCESS_TOKEN = (process.env.MESSENGER_PAGE_ACCESS_TOKEN) ? (process.env.MESSENGER_PAGE_ACCESS_TOKEN) : ''
+const PAGE_ACCESS_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN || '';
+
+const API_AI_ACCESS_TOKEN = process.env.API_AI_ACCESS_TOKEN || '';
 
 app.get('/webhook', function(req, res) {
 	if (req.query['hub.mode'] === 'subscribe' &&
@@ -63,17 +65,35 @@ function receivedMessage(event) {
 	senderID, recipientID, timeOfMessage);
 	console.log(JSON.stringify(message));
 
-	var messageId = message.mid;
-	var appId = message.app_id;
-	var metadata = message.metadata;
+	request(
+	{
+		url: 'https://api.api.ai/v1/query',
+		headers: {
+			'Bearer': API_AI_ACCESS_TOKEN,
+		},
+		method: 'POST',
+		json: {
+			query: message.text,
+			sessionId: '1234567890'
+		}
+	}, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			sendTextMessage(senderID, formResponseMessage(body));
+		} else {
+			console.error(response.error);
+		}
+	});
+}
 
-	// You may get a text or attachment but not both
-	var messageText = message.text;
-	var messageAttachments = message.attachments;
-	var quickReply = message.quick_reply;
-
-	if (messageText)
-		sendTextMessage(senderID, messageText);
+function formResponseMessage(body) {
+	var city = body.result.parameters['geo-city'];
+	var date = body.result.parameters['date'];
+	var time = body.result.parameters['time'];
+	var hasCity = city != null;
+	var hasDate = date != null;
+	var hasTime = time != null;
+	var result = 'You requested a weather forecast in ' + (hasCity ? city : 'your location') + ' for ' + (hasDate ? date : 'now') + ' at ' + (hasTime ? time : '00:00') + '.';
+	return result;
 }
 
 /*
