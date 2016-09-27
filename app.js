@@ -5,7 +5,8 @@ const
 	crypto = require('crypto'),
 	express = require('express'),
 	https = require('https'),	
-	request = require('request');
+	request = require('request'),
+	dateFormat = require('dateformat');
 
 var app = express();
 app.set('port', process.env.PORT || 3000);
@@ -64,6 +65,8 @@ function receivedMessage(event) {
 	console.log("Received message for user %d and page %d at %d with message:", 
 	senderID, recipientID, timeOfMessage);
 	console.log(JSON.stringify(message));
+	
+	sendTypingOn(senderID);
 
 	request(
 	{
@@ -80,8 +83,10 @@ function receivedMessage(event) {
 			lang: 'en'
 		}
 	}, function (error, response, body) {
-		if (!error && response.statusCode == 200)
+		if (!error && response.statusCode == 200) {
+			sendTypingOff(senderID);
 			sendTextMessage(senderID, formResponseMessage(JSON.parse(body)));
+		}
 	});
 }
 
@@ -97,13 +102,12 @@ function formResponseMessage(body) {
 	if (!hasCity)
 		city = 'your location';
 	if (!hasDate)
-		date = body.timestamp.substring(0, 10);
+		date = dateFormat(new Date(body.timestamp), 'isoDate');
 	if (!hasTime) {
 		if (hasDate)
 			time = '00:00:00';
-		else {
-			time = body.timestamp.substring(11, 19);
-		}
+		else
+			time = dateFormat(new Date(body.timestamp), 'isoTime');
 	}
 
 	console.log(hasCity, city, hasDate, date, hasTime, time);
