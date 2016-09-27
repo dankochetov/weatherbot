@@ -83,7 +83,7 @@ function receivedMessage(event) {
 		if (!error && response.statusCode == 200) {
 			sendTextMessage(senderID, formResponseMessage(body));
 		} else {
-			console.log(response.status);
+			console.log(response);
 		}
 	});
 }
