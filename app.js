@@ -103,6 +103,7 @@ function formResponseMessage(body) {
 			time = '00:00:00';
 		else {
 			var currentTime = new Date(body.result.timestamp);
+			console.log(body.result.timestamp, currentTime);
 			var hours = currentTime.getHours();
 			var minutes = currentTime.getMinutes();
 			var seconds = currentTime.getSeconds();
