@@ -65,7 +65,7 @@ function receivedMessage(event) {
 	console.log("Received message for user %d and page %d at %d with message:", 
 	senderID, recipientID, timeOfMessage);
 	console.log(JSON.stringify(message));
-	
+
 	sendTypingOn(senderID);
 
 	request(
@@ -93,9 +93,9 @@ function receivedMessage(event) {
 function formResponseMessage(body) {
 	if (body.result.metadata.intentName == 'Default Fallback Intent')
 		return body.result.fulfillment.speech;
-	var city = body.result.parameters['geo-city'];
-	var date = body.result.parameters['date'];
-	var time = body.result.parameters['time'];
+	var city = body.result.parameters.address.city;
+	var date = body.result.parameters.date;
+	var time = body.result.parameters.time;
 	var hasCity = city != null && city != "";
 	var hasDate = date != null && date != "";
 	var hasTime = time != null && time != "";
