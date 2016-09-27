@@ -92,6 +92,7 @@ function formResponseMessage(body) {
 	var hasCity = city != null && city != "";
 	var hasDate = date != null && date != "";
 	var hasTime = time != null && time != "";
+	console.log(hasCity, city, hasDate, date, hasTime, time);
 	var result = 'You requested a weather forecast in ' + (hasCity ? city : 'your location') + ' for ' + (hasDate ? date : 'now') + ' at ' + (hasTime ? time : '00:00') + '.';
 	return result;
 }
