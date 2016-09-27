@@ -39,6 +39,26 @@ app.get('/webhook', function(req, res) {
 	}	
 });
 
+app.post('/webhook', function(req, res, next) {
+	var data = req.body;
+	if (data.object == 'page') {
+		data.entry.forEach(function(pageEntry) {
+			var pageID = pageEntry.id;
+			var timeOfEvent = pageEntry.name;
+
+			pageEntry.messaging.forEach(function(messagingEvent) {
+				if (messagingEvent.message) {
+					receivedMessage(messagingEvent);
+				}
+			});
+		});
+	}
+	else {
+		console.log('data is:');
+		console.log(JSON.stringify(data));
+	}
+});
+
 function sendMessage(recipientID, messageText) {
 	var messageData = {
 		recipient: {
@@ -83,22 +103,6 @@ function receivedMessage(event) {
 	var messageText = message.text;
 	sendTextMessage(senderID, messageText);
 }
-
-app.post('/webhook', function(req, res, next) {
-	var data = req.body;
-	if (data.object == 'page') {
-		data.entry.forEach(function(pageEntry) {
-			var pageID = pageEntry.id;
-			var timeOfEvent = pageEntry.name;
-
-			pageEntry.messaging.forEach(function(messagingEvent) {
-				if (messagingEvent.message) {
-					receivedMessage(messagingEvent);
-				}
-			});
-		});
-	}
-});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
