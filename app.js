@@ -74,17 +74,14 @@ function receivedMessage(event) {
 		},
 		method: 'GET',
 		qs: {
-			v: '20150910'
+			v: '20150910',
 			query: message.text,
 			sessionId: '1234567890',
 			lang: 'en'
 		}
 	}, function (error, response, body) {
-		if (!error && response.statusCode == 200) {
+		if (!error && response.statusCode == 200)
 			sendTextMessage(senderID, formResponseMessage(body));
-		} else {
-			console.log(response);
-		}
 	});
 }
 
