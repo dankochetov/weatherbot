@@ -7,7 +7,7 @@ const
 	https = require('https'),	
 	request = require('request'),
 	dateFormat = require('dateformat'),
-	Promise = require('promise');
+	defer = require('./defer');
 
 var app = express();
 app.set('port', process.env.PORT || 3000);
@@ -71,7 +71,7 @@ function receivedMessage(event) {
 
 	sendTypingOn(senderID);
 
-	function(senderID) {
+	(function(senderID) {
 		request(
 		{
 			url: 'https://api.api.ai/v1/query',
@@ -91,12 +91,13 @@ function receivedMessage(event) {
 				var queryParams = getQueryParams(JSON.parse(body));
 				sendTextMessage(senderID, formResponseMessage(queryParams));
 				getForecast(queryParams).then(function(forecast) {
+					console.log('promise');
 					sendTextMessage(senderID, forecast);
 					sendTypingOff(senderID);
 				});
 			}
 		});
-	}(senderID);
+	})(senderID);
 }
 
 function getQueryParams(body) {
@@ -152,29 +153,31 @@ function formResponseMessage(params) {
 }
 
 function getForecast(params) {
-	return new Promise(function(resolve, reject) {
-		if (!params.hasCity) {
-			resolve('Cannot determine weather forecast in this location. Please specify the city.');
-		}
+	var result = defer();
 
-		request(
-		{
-			url: 'api.openweathermap.org/data/2.5/find',
-			qs: {
-				q: params.city,
-				APPID: WEATHER_API_KEY,
-				units: 'metric'
-			}
-		}, function(err, response, body) {
-			var weather = JSON.parse(body);
-			result = 'Weather type: ' + weather.weather.description + String.fromCharCode(10);
-			result += 'Temperature: ' + weather.main.temp + ' °C' + String.fromCharCode(10);
-			result += 'Humidity: ' + weather.main.humidity + '%' + String.fromCharCode(10);
-			result += 'Wind speed: ' + weather.wind.speed + ' m/s' + String.fromCharCode(10);
-			result += 'Cloudiness: ' + weather.clouds.all + '%';
-			resolve(result);
-		});
+	if (!params.hasCity) {
+		result.resolve('Cannot determine weather forecast in this location. Please specify the city.');
+	}
+
+	request(
+	{
+		url: 'http://api.openweathermap.org/data/2.5/weather',
+		qs: {
+			q: params.city,
+			APPID: WEATHER_API_KEY,
+			units: 'metric'
+		}
+	}, function(err, response, body) {
+		var weather = JSON.parse(body);
+		var str = 'Weather type: ' + weather.weather[0].description + String.fromCharCode(10);
+		str += 'Temperature: ' + weather.main.temp + ' °C' + String.fromCharCode(10);
+		str += 'Humidity: ' + weather.main.humidity + '%' + String.fromCharCode(10);
+		str += 'Wind speed: ' + weather.wind.speed + ' m/s' + String.fromCharCode(10);
+		str += 'Cloudiness: ' + weather.clouds.all + '%';
+		result.resolve(str);
 	});
+
+	return result;
 }
 
 /*
