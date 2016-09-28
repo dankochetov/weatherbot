@@ -196,8 +196,7 @@ function getForecast(params) {
 		var weatherDate = new Date(allweather.list[closestForecastInd].dt_txt)
 
 		var str =
-`Showing closest weather available: ${dateFormat(weatherDate, 'isoDate') + dateFormat(weatherDate, 'isoTime')}
-
+`Showing closest weather available: ${dateFormat(weatherDate, 'isoDate')} ${dateFormat(weatherDate, 'isoTime')}
 
 Weather type: ${weather.weather[0].description}
 Temperature: ${weather.main.temp} °C
