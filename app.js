@@ -6,7 +6,8 @@ const
 	express = require('express'),
 	https = require('https'),	
 	request = require('request'),
-	dateFormat = require('dateformat');
+	dateFormat = require('dateformat'),
+	Promise = require('promise');
 
 var app = express();
 app.set('port', process.env.PORT || 3000);
@@ -19,6 +20,8 @@ const VALIDATION_TOKEN = process.env.MESSENGER_VALIDATION_TOKEN || '';
 const PAGE_ACCESS_TOKEN = process.env.MESSENGER_PAGE_ACCESS_TOKEN || '';
 
 const API_AI_ACCESS_TOKEN = process.env.API_AI_ACCESS_TOKEN || '';
+
+const WEATHER_API_KEY = process.env.WEATHER_API_KEY || '';
 
 app.get('/webhook', function(req, res) {
 	if (req.query['hub.mode'] === 'subscribe' &&
@@ -84,15 +87,22 @@ function receivedMessage(event) {
 		}
 	}, function (error, response, body) {
 		if (!error && response.statusCode == 200) {
-			sendTypingOff(senderID);
-			sendTextMessage(senderID, formResponseMessage(JSON.parse(body)));
+			var queryParams = getQueryParams(JSON.parse(body));
+			sendTextMessage(senderID, formResponseMessage(queryParams));
+			getForecast(queryParams).then(function(forecast) {
+				sendTextMessage(senderID, forecast);
+				sendTypingOff(senderID);
+			});
 		}
 	});
 }
 
-function formResponseMessage(body) {
+function getQueryParams(body) {
 	if (body.result.metadata.intentName == 'Default Fallback Intent')
-		return body.result.fulfillment.speech;
+		return {
+			fallback: true,
+			text: body.result.fulfillment.speech
+		};
 	var city = body.result.parameters.address.city;
 	var state = body.result.parameters.address.state;
 	var date = body.result.parameters.date;
@@ -119,9 +129,50 @@ function formResponseMessage(body) {
 			time = dateFormat(new Date(body.timestamp), 'isoTime');
 	}
 
-	console.log(hasCity, city, hasDate, date, hasTime, time);
-	var result = 'You requested a weather forecast in ' + city + ' for ' + date + ' at ' + time + '.';
+	return {
+		fallback: false,
+		time: time,
+		hasTime: hasTime,
+		date: date,
+		hasDate: hasDate,
+		city: city,
+		hasCity: hasCity,
+		state: state,
+		hasState: hasState
+	};
+}
+
+function formResponseMessage(params) {
+	if (params.fallback)
+		return params.text;
+	var result = 'You requested a weather forecast in ' + params.city + ' for ' + params.date + ' at ' + params.time + '.';
 	return result;
+}
+
+function getForecast(params) {
+	return new Promise(function(resolve, reject) {
+		if (!params.hasCity) {
+			resolve('Cannot determine weather forecast in this location. Please specify the city.');
+		}
+
+		request(
+		{
+			url: 'api.openweathermap.org/data/2.5/find',
+			qs: {
+				q: params.city,
+				APPID: WEATHER_API_KEY,
+				units: 'metric'
+			}
+		}, function(err, response, body) {
+			var weather = JSON.parse(body);
+			result = 'Weather type: ' + weather.weather.description + String.fromCharCode(10);
+			result += 'Temperature: ' + weather.main.temp + ' °C' + String.fromCharCode(10);
+			result += 'Humidity: ' + weather.main.humidity + '%' + String.fromCharCode(10);
+			result += 'Wind speed: ' + weather.wind.speed + ' m/s' + String.fromCharCode(10);
+			result += 'Cloudiness: ' + weather.clouds.all + '%';
+			resolve(result);
+		});
+	});
 }
 
 /*
