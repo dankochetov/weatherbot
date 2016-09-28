@@ -69,6 +69,7 @@ function receivedMessage(event) {
 	senderID, recipientID, timeOfMessage);
 	console.log(JSON.stringify(message));
 
+	sendReadReceipt(senderID);
 	sendTypingOn(senderID);
 
 	(function(senderID) {
@@ -90,22 +91,26 @@ function receivedMessage(event) {
 			if (!error && response.statusCode == 200) {
 				var queryParams = getQueryParams(JSON.parse(body));
 				sendTextMessage(senderID, formResponseMessage(queryParams));
-				getForecast(queryParams).then(function(forecast) {
-					console.log('promise');
-					sendTextMessage(senderID, forecast);
-					sendTypingOff(senderID);
-				});
+				if (!queryParams.fallback) {
+					sendTypingOn(senderID);
+					getForecast(queryParams).then(function(forecast) {
+						console.log('promise');
+						sendTextMessage(senderID, forecast);
+					});
+				}
 			}
 		});
 	})(senderID);
 }
 
 function getQueryParams(body) {
-	if (body.result.metadata.intentName == 'Default Fallback Intent')
+	console.log(body.result.metadata.intentName);
+	if (body.result.metadata.intentName != 'show weather')
 		return {
 			fallback: true,
 			text: body.result.fulfillment.speech
 		};
+
 	var city = body.result.parameters.address.city;
 	var state = body.result.parameters.address.state;
 	var date = body.result.parameters.date;
@@ -156,23 +161,50 @@ function getForecast(params) {
 	var result = defer();
 
 	if (!params.hasCity) {
-		result.resolve('Cannot determine weather forecast in this location. Please specify the city.');
+		result.resolve('Cannot determine weather forecast in this location. Please specify the correct city name. Also, it may be that you specified the city I just don\'t know.');
+		return result;
 	}
 
 	request(
 	{
-		url: 'http://api.openweathermap.org/data/2.5/weather',
+		url: 'http://api.openweathermap.org/data/2.5/forecast',
 		qs: {
 			q: params.city,
 			APPID: WEATHER_API_KEY,
 			units: 'metric'
 		}
 	}, function(err, response, body) {
-		var weather = JSON.parse(body);
-		var str = 'Weather type: ' + weather.weather[0].description + String.fromCharCode(10);
-		str += 'Temperature: ' + weather.main.temp + ' °C' + String.fromCharCode(10);
-		str += 'Humidity: ' + weather.main.humidity + '%' + String.fromCharCode(10);
-		str += 'Wind speed: ' + weather.wind.speed + ' m/s' + String.fromCharCode(10);
+		var allweather = JSON.parse(body);
+
+		if (!allweather.list) {
+			console.log(allweather);
+			result.resolve('Cannot determine weather forecast in this location. Please try something else.');
+			return result;
+		}
+
+		// Picking the closest forecast available from the list
+		// The weather API gives me the forecast for 5 days maximum
+		var closestForecastInd = 0;
+		var closestForecastDt = 1e20;	
+		var timeRequested = new Date(params.date + ' ' + params.time);
+		for (var curForecastInd in allweather.list) {
+			var curDt = Math.abs((new Date(allweather.list[curForecastInd].dt_txt)) - timeRequested);
+			if (curDt < closestForecastDt) {
+				closestForecastInd = curForecastInd;
+				closestForecastDt = curDt;
+			}
+		}
+
+		var weather = allweather.list[closestForecastInd];
+		var weatherDate = new Date(allweather.list[closestForecastInd].dt_txt);
+
+		var newLine = String.fromCharCode(10);
+
+		var str = 'Showing closest weather available: ' + dateFormat(weatherDate, 'isoDate') + ' ' + dateFormat(weatherDate, 'isoTime') + newLine + newLine;
+		str += 'Weather type: ' + weather.weather[0].description + newLine;
+		str += 'Temperature: ' + weather.main.temp + ' °C' + newLine;
+		str += 'Humidity: ' + weather.main.humidity + '%' + newLine;
+		str += 'Wind speed: ' + weather.wind.speed + ' m/s' + newLine;
 		str += 'Cloudiness: ' + weather.clouds.all + '%';
 		result.resolve(str);
 	});
@@ -250,11 +282,29 @@ function sendTypingOff(recipientId) {
 }
 
 /*
+ * Send a read receipt to indicate the message has been read
+ *
+ */
+function sendReadReceipt(recipientId) {
+	console.log("Sending a read receipt to mark message as seen");
+
+	var messageData = {
+		recipient: {
+			id: recipientId
+		},
+		sender_action: "mark_seen"
+	};
+
+	callSendAPI(messageData);
+}
+
+/*
  * Call the Send API. The message data goes in the body. If successful, we'll 
  * get the message id in a response 
  *
  */
 function callSendAPI(messageData) {
+	console.log(messageData);
 	request(
 	{
 		uri: 'https://graph.facebook.com/v2.6/me/messages',
@@ -274,8 +324,7 @@ function callSendAPI(messageData) {
 			recipientId);
 			}
 		} else {
-			console.log(response);
-			console.log(body);
+			console.log(error || response.statusCode);
 		}
 	});
 }

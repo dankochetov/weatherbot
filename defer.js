@@ -14,7 +14,7 @@ var defer = function() {
 		resolve: function(val) {
 			this.value = val;
 			this.isResolved = true;
-			for (i in this.callbacks)
+			for (var i in this.callbacks)
 				this.callbacks[i](this.value);
 		}.bind(this)
 	};
