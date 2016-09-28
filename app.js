@@ -71,30 +71,32 @@ function receivedMessage(event) {
 
 	sendTypingOn(senderID);
 
-	request(
-	{
-		url: 'https://api.api.ai/v1/query',
-		headers: {
-			'Authorization': 'Bearer ' + API_AI_ACCESS_TOKEN,
-			'Content-Type': 'application/json; charset=utf-8'
-		},
-		method: 'GET',
-		qs: {
-			v: '20150910',
-			query: message.text,
-			sessionId: '1234567890',
-			lang: 'en'
-		}
-	}, function (error, response, body) {
-		if (!error && response.statusCode == 200) {
-			var queryParams = getQueryParams(JSON.parse(body));
-			sendTextMessage(senderID, formResponseMessage(queryParams));
-			getForecast(queryParams).then(function(forecast) {
-				sendTextMessage(senderID, forecast);
-				sendTypingOff(senderID);
-			});
-		}
-	});
+	function(senderID) {
+		request(
+		{
+			url: 'https://api.api.ai/v1/query',
+			headers: {
+				'Authorization': 'Bearer ' + API_AI_ACCESS_TOKEN,
+				'Content-Type': 'application/json; charset=utf-8'
+			},
+			method: 'GET',
+			qs: {
+				v: '20150910',
+				query: message.text,
+				sessionId: '1234567890',
+				lang: 'en'
+			}
+		}, function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				var queryParams = getQueryParams(JSON.parse(body));
+				sendTextMessage(senderID, formResponseMessage(queryParams));
+				getForecast(queryParams).then(function(forecast) {
+					sendTextMessage(senderID, forecast);
+					sendTypingOff(senderID);
+				});
+			}
+		});
+	}(senderID);
 }
 
 function getQueryParams(body) {
