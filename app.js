@@ -11,9 +11,7 @@ const
 
 var app = express()
 app.set('port', process.env.PORT || 3000)
-app.set('view engine', 'ejs')
 app.use(bodyParser.json())
-app.use(express.static('public'))
 
 const VALIDATION_TOKEN = process.env.MESSENGER_VALIDATION_TOKEN || ''
 
