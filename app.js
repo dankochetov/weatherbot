@@ -94,7 +94,7 @@ function formResponseMessage(body) {
 	if (body.result.metadata.intentName == 'Default Fallback Intent')
 		return body.result.fulfillment.speech;
 	var city = body.result.parameters.address.city;
-	var state = body.result.paremeters.address.state;
+	var state = body.result.parameters.address.state;
 	var date = body.result.parameters.date;
 	var time = body.result.parameters.time;
 	var hasCity = city != null && city != "";
