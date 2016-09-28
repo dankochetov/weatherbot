@@ -94,13 +94,22 @@ function formResponseMessage(body) {
 	if (body.result.metadata.intentName == 'Default Fallback Intent')
 		return body.result.fulfillment.speech;
 	var city = body.result.parameters.address.city;
+	var state = body.result.paremeters.address.state;
 	var date = body.result.parameters.date;
 	var time = body.result.parameters.time;
 	var hasCity = city != null && city != "";
 	var hasDate = date != null && date != "";
 	var hasTime = time != null && time != "";
-	if (!hasCity)
-		city = 'your location';
+	var hasState = state != null && state != "";
+	if (!hasCity) {
+		if (hasState)
+			city = state;
+		else
+			city = 'your location';
+	}
+	else if (hasState) {
+		city += ', ' + state;
+	}
 	if (!hasDate)
 		date = dateFormat(new Date(body.timestamp), 'isoDate');
 	if (!hasTime) {
