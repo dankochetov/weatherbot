@@ -60,16 +60,13 @@ app.post('/webhook', (req, res) => {
 })
 
 function receivedMessage(event) {
-	var senderID = event.sender.id
-	var recipientID = event.recipient.id
-	var timeOfMessage = event.timestamp
-	var message = event.message
+	var {sender: {id: senderID}, recipient: {id: recipientID}, timestamp: timeOfMessage, message} = event;
 
 	console.log(`Received message for user ${senderID} and page ${recipientID} at ${timeOfMessage} with message:`)
 	console.log(JSON.stringify(message))
 
 	sendReadReceipt(senderID)
-	sendTypingOn(senderID)
+	sendTypingOn(senderID);
 
 	((senderID) => {
 		request(
@@ -91,6 +88,7 @@ function receivedMessage(event) {
 				var queryParams = getQueryParams(JSON.parse(body))
 				sendTextMessage(senderID, formResponseMessage(queryParams))
 				if (!queryParams.fallback) {
+					console.log(sendTypingOn)
 					sendTypingOn(senderID)
 					getForecast(queryParams).then((forecast) => {
 						console.log('promise')
@@ -197,15 +195,16 @@ function getForecast(params) {
 		var weather = allweather.list[closestForecastInd]
 		var weatherDate = new Date(allweather.list[closestForecastInd].dt_txt)
 
-		var newLine = String.fromCharCode(10)
-
 		var str =
-		`Showing closest weather available: ${dateFormat(weatherDate, 'isoDate') + dateFormat(weatherDate, 'isoTime') + newLine + newLine}
-		Weather type: ${weather.weather[0].description + newLine}
-		Temperature: ${weather.main.temp} °C ${newLine}
-		Humidity: ${weather.main.humidity}% ${newLine}
-		Wind speed: ${weather.wind.speed} m/s ${newLine}
-		Cloudiness: ${weather.clouds.all}%`
+`Showing closest weather available: ${dateFormat(weatherDate, 'isoDate') + dateFormat(weatherDate, 'isoTime')}
+
+
+Weather type: ${weather.weather[0].description}
+Temperature: ${weather.main.temp} °C
+Humidity: ${weather.main.humidity}%
+Wind speed: ${weather.wind.speed} m/s
+Cloudiness: ${weather.clouds.all}%`
+
 		result.resolve(str)
 	})
 
@@ -218,13 +217,13 @@ function getForecast(params) {
  */
 function sendTextMessage(recipientId, messageText) {
 	var messageData = {
-	recipient: {
-		id: recipientId
-	},
-	message: {
-		text: messageText,
-		metadata: "DEVELOPER_DEFINED_METADATA"
-	}
+		recipient: {
+			id: recipientId
+		},
+		message: {
+			text: messageText,
+			metadata: "DEVELOPER_DEFINED_METADATA"
+		}
 	}
 
 	callSendAPI(messageData)
